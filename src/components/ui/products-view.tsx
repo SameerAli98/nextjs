@@ -3,40 +3,46 @@
 import { useState, useEffect, useMemo } from "react";
 import { columns } from "@/app/columns";
 import { DataTable } from "@/components/ui/data-table";
-import { readJsonFile, readProductsFromJson } from "@/services";
 import { Product } from "@/types";
 import { Card } from "@/components/ui/card";
+import userQueries from "@/data/user_queries.json";
+import smartphones from "@/data/smartphones.json";
+import curtains from "@/data/curtains.json";
+import speakers from "@/data/speakers.json";
+import PCs from "@/data/PCs.json";
+import chairs from "@/data/chairs.json";
+import beds from "@/data/beds.json";
+import sofas from "@/data/sofas.json";
+import laptops from "@/data/laptops.json";
+import projectors from "@/data/projectors.json";
+import headphones from "@/data/headphones.json";
+
+const dataMap = {
+  smartphones,
+  curtains,
+  speakers,
+  PCs,
+  chairs,
+  beds,
+  sofas,
+  laptops,
+  projectors,
+  headphones,
+};
 
 export default function ProductsView() {
-  const [selectedCard, setSelectedCard] = useState<string | null>(null);
-  const [products, setProducts] = useState<Product[]>([]);
-
-  const [queries, setQueries] = useState<string[]>([]);
-
-  useEffect(() => {
-    const fetchQueries = async () => {
-      try {
-        const userQueries: string[] = await readJsonFile("user_queries.json");
-        setQueries(userQueries);
-      } catch (err) {
-        console.error(`Failed to load user queries. ${err}`);
-      }
-    };
-
-    fetchQueries();
-  }, []);
-
-  useEffect(() => {
-    const fetchProducts = async () => {
-      if (selectedCard) {
-        const fetchedProducts = await readProductsFromJson(
-          `${selectedCard}.json`
-        );
-        setProducts(fetchedProducts);
-      }
-    };
-
-    fetchProducts();
+  const [selectedCard, setSelectedCard] = useState<keyof typeof dataMap | null>(
+    null
+  );
+  const products = useMemo<Product[]>(() => {
+    if (!selectedCard) return [];
+    return dataMap[selectedCard].map((row) => ({
+      title: row.title,
+      price: row.price || "Not Mentioned",
+      reviews: parseInt(row.reviews || "0"),
+      imageUrl: row.image_url,
+      scrapeDatetime: new Date(row.scrape_datetime),
+    }));
   }, [selectedCard]);
 
   return (
@@ -45,11 +51,11 @@ export default function ProductsView() {
         Amazon Products Data
       </h1>
       <div className="flex flex-wrap gap-4">
-        {queries.map((query) => (
+        {userQueries.map((query) => (
           <Card
             key={query}
             title={query}
-            onClick={() => setSelectedCard(query)}
+            onClick={() => setSelectedCard(query as keyof typeof dataMap)}
           />
         ))}
       </div>
